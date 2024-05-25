@@ -19,7 +19,6 @@ import {
   State,
   datasets,
   regDatasets,
-  activations,
   problems,
   regularizations,
   getKeyFromValue,
@@ -79,7 +78,6 @@ let HIDABLE_CONTROLS = [
   ["Step button", "stepButton"],
   ["Reset button", "resetButton"],
   ["Learning rate", "learningRate"],
-  ["Activation", "activation"],
   ["Regularization", "regularization"],
   ["Regularization rate", "regularizationRate"],
   ["Problem type", "problem"],
@@ -320,14 +318,6 @@ function makeGUI() {
   });
   batchSize.property("value", state.batchSize);
   d3.select("label[for='batchSize'] .value").text(state.batchSize);
-
-  let activationDropdown = d3.select("#activations").on("change", function() {
-    state.activation = activations[this.value];
-    parametersChanged = true;
-    reset();
-  });
-  activationDropdown.property("value",
-      getKeyFromValue(activations, state.activation));
 
   let learningRate = d3.select("#learningRate").on("change", function() {
     state.learningRate = +this.value;
@@ -953,10 +943,8 @@ function reset(onStartup=false) {
   iter = 0;
   let numInputs = constructInput(0 , 0).length;
   let shape = [numInputs].concat(state.networkShape).concat([1]);
-  let outputActivation = (state.problem === Problem.REGRESSION) ?
-      nn.Activations.LINEAR : nn.Activations.TANH;
-  network = nn.buildNetwork(shape, state.activation, outputActivation,
-      state.regularization, constructInputIds(), state.initZero);
+  network = nn.buildNetwork(shape, state.regularization,
+    constructInputIds(), state.initZero);
   lossTrain = getLoss(network, trainData);
   lossTest = getLoss(network, testData);
   drawNetwork(network);

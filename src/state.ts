@@ -19,14 +19,6 @@ import * as dataset from "./dataset";
 /** Suffix added to the state when storing if a control is hidden or not. */
 const HIDE_STATE_SUFFIX = "_hide";
 
-/** A map between names and activation functions. */
-export let activations: {[key: string]: nn.ActivationFunction} = {
-  "relu": nn.Activations.RELU,
-  "tanh": nn.Activations.TANH,
-  "sigmoid": nn.Activations.SIGMOID,
-  "linear": nn.Activations.LINEAR
-};
-
 /** A map between names and regularization functions. */
 export let regularizations: {[key: string]: nn.RegularizationFunction} = {
   "none": null,
@@ -104,7 +96,6 @@ export interface Property {
 export class State {
 
   private static PROPS: Property[] = [
-    {name: "activation", type: Type.OBJECT, keyMap: activations},
     {name: "regularization", type: Type.OBJECT, keyMap: regularizations},
     {name: "batchSize", type: Type.NUMBER},
     {name: "dataset", type: Type.OBJECT, keyMap: datasets},
@@ -142,7 +133,6 @@ export class State {
   discretize = false;
   tutorial: string = null;
   percTrainData = 50;
-  activation = nn.Activations.TANH;
   regularization: nn.RegularizationFunction = null;
   problem = Problem.CLASSIFICATION;
   initZero = false;

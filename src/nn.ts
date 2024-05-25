@@ -42,15 +42,12 @@ export class Node {
    * since the last update.
    */
   numAccumulatedDers = 0;
-  /** Activation function that takes total input and returns node's output */
-  activation: ActivationFunction;
 
   /**
-   * Creates a new node with the provided id and activation function.
+   * Creates a new node with the provided id.
    */
-  constructor(id: string, activation: ActivationFunction, initZero?: boolean) {
+  constructor(id: string, initZero?: boolean) {
     this.id = id;
-    this.activation = activation;
     if (initZero) {
       this.bias = 0;
     }
@@ -64,7 +61,7 @@ export class Node {
       let link = this.inputLinks[j];
       this.totalInput += link.weight * link.source.output;
     }
-    this.output = this.activation.output(this.totalInput);
+    this.output = this.totalInput;
     return this.output;
   }
 }
@@ -75,12 +72,6 @@ export class Node {
 export interface ErrorFunction {
   error: (output: number, target: number) => number;
   der: (output: number, target: number) => number;
-}
-
-/** A node's activation function and its derivative. */
-export interface ActivationFunction {
-  output: (input: number) => number;
-  der: (input: number) => number;
 }
 
 /** Function that computes a penalty cost for a given weight in the network. */
@@ -95,44 +86,6 @@ export class Errors {
     error: (output: number, target: number) =>
                0.5 * Math.pow(output - target, 2),
     der: (output: number, target: number) => output - target
-  };
-}
-
-/** Polyfill for TANH */
-(Math as any).tanh = (Math as any).tanh || function(x) {
-  if (x === Infinity) {
-    return 1;
-  } else if (x === -Infinity) {
-    return -1;
-  } else {
-    let e2x = Math.exp(2 * x);
-    return (e2x - 1) / (e2x + 1);
-  }
-};
-
-/** Built-in activation functions */
-export class Activations {
-  public static TANH: ActivationFunction = {
-    output: x => (Math as any).tanh(x),
-    der: x => {
-      let output = Activations.TANH.output(x);
-      return 1 - output * output;
-    }
-  };
-  public static RELU: ActivationFunction = {
-    output: x => Math.max(0, x),
-    der: x => x <= 0 ? 0 : 1
-  };
-  public static SIGMOID: ActivationFunction = {
-    output: x => 1 / (1 + Math.exp(-x)),
-    der: x => {
-      let output = Activations.SIGMOID.output(x);
-      return output * (1 - output);
-    }
-  };
-  public static LINEAR: ActivationFunction = {
-    output: x => x,
-    der: x => 1
   };
 }
 
@@ -194,16 +147,13 @@ export class Link {
  * @param networkShape The shape of the network. E.g. [1, 2, 3, 1] means
  *   the network will have one input node, 2 nodes in first hidden layer,
  *   3 nodes in second hidden layer and 1 output node.
- * @param activation The activation function of every hidden node.
- * @param outputActivation The activation function for the output nodes.
  * @param regularization The regularization function that computes a penalty
  *     for a given weight (parameter) in the network. If null, there will be
  *     no regularization.
  * @param inputIds List of ids for the input nodes.
  */
 export function buildNetwork(
-    networkShape: number[], activation: ActivationFunction,
-    outputActivation: ActivationFunction,
+    networkShape: number[],
     regularization: RegularizationFunction,
     inputIds: string[], initZero?: boolean): Node[][] {
   let numLayers = networkShape.length;
@@ -223,8 +173,7 @@ export function buildNetwork(
       } else {
         id++;
       }
-      let node = new Node(nodeId,
-          isOutputLayer ? outputActivation : activation, initZero);
+      let node = new Node(nodeId, initZero);
       currentLayer.push(node);
       if (layerIdx >= 1) {
         // Add links from nodes in the previous layer to this node.
@@ -294,7 +243,7 @@ export function backProp(network: Node[][], target: number,
     // 2) each of its input weights.
     for (let i = 0; i < currentLayer.length; i++) {
       let node = currentLayer[i];
-      node.inputDer = node.outputDer * node.activation.der(node.totalInput);
+      node.inputDer = node.outputDer;
       node.accInputDer += node.inputDer;
       node.numAccumulatedDers++;
     }
